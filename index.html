@@ -36,7 +36,7 @@ footer{text-align:center;color:var(--muted);padding:30px}
 
 <div id="site" class="hidden">
 <header><div class="top"><img src="logo_widya.png" class="miniLogo"><div class="brand" id="brand">SPMB SMK Widya Dirgantara<small id="year">2026/2027</small></div>
-<div class="menu" id="menu"><button onclick="page('beranda')" class="active">Beranda</button><button onclick="page('daftar')">Pendaftaran</button><button onclick="page('biaya')">Biaya</button><button onclick="page('syarat')">Persyaratan</button><button onclick="page('cek')">Cek Status</button><button id="adminBtn" onclick="page('admin')" class="hidden">Admin</button><button onclick="logout()">Keluar</button></div></div></header>
+<div class="menu" id="menu"><button onclick="page('beranda')" class="active">Beranda</button><button onclick="page('daftar')">Pendaftaran</button><button onclick="page('biaya')">Biaya</button><button onclick="page('syarat')">Persyaratan</button><button onclick="page('cek')">Cek Status</button><button onclick="page('kwitansi')">Cetak Kwitansi</button><button id="adminBtn" onclick="page('admin')" class="hidden">Dashboard</button><button id="paymentBtn" onclick="page('pembayaran')" class="hidden">Pembayaran</button><button onclick="logout()">Keluar</button></div></div></header>
 <div class="wrap">
 <section id="beranda" class="page active">
 <div class="hero"><h1 id="schoolName">SPMB SMK WIDYA DIRGANTARA</h1><div class="muted" id="schedule">Jadwal SPMB</div><p>Portal resmi pendaftaran murid baru. Lengkapi data dengan benar, unggah dokumen persyaratan, lalu pantau status pendaftaran melalui nomor pendaftaran.</p><button class="primary" onclick="page('daftar')">Mulai Pendaftaran</button></div>
@@ -59,11 +59,41 @@ footer{text-align:center;color:var(--muted);padding:30px}
 <section id="syarat" class="page"><div class="card"><h2>Persyaratan & Unggah Dokumen</h2><div id="reqs"></div><div class="notice">Setelah memperoleh nomor pendaftaran, buka menu Cek Status untuk mengunggah dokumen.</div></div></section>
 <section id="cek" class="page"><div class="card"><h2>Cek Pendaftaran</h2><div style="display:flex;gap:8px"><input id="search" placeholder="Nomor pendaftaran / NIK / NISN"><button class="primary" onclick="searchData()">Cari</button></div><div id="result" style="margin-top:16px"></div></div></section>
 
+
+<section id="kwitansi" class="page">
+<div class="grid">
+<div class="card span8">
+<h2>🧾 Cetak Kwitansi</h2>
+<p class="muted">Masukkan nomor pendaftaran, NIK, atau NISN untuk menampilkan pembayaran dan mencetak kwitansi.</p>
+<div style="display:flex;gap:8px"><input id="kwSearch" placeholder="Contoh: SPMB-2026-00001"><button class="primary" onclick="findReceipt()">Cari</button></div>
+<div id="kwResult" style="margin-top:16px"></div>
+</div>
+<div class="card span4"><h3>Informasi Kwitansi</h3><p>Kwitansi memuat nomor kwitansi, nomor pendaftaran, nama, rincian pembayaran, nominal, terbilang, metode, tanggal, status, logo sekolah dan tanda tangan panitia.</p></div>
+</div>
+</section>
 <section id="admin" class="page">
 <div id="dash" class="grid"><div class="card span12"><h2>Dashboard</h2><div class="stats"><div class="stat">Total<b id="dTotal">0</b></div><div class="stat">Menunggu<b id="dWait">0</b></div><div class="stat">Terverifikasi<b id="dVer">0</b></div><div class="stat">Diterima<b id="dAcc">0</b></div></div></div>
 <div class="card span12"><div style="display:flex;gap:8px;justify-content:space-between;align-items:center"><h2>Data Pendaftar</h2><button class="gold" onclick="downloadReport()">Unduh CSV</button></div><div class="tablewrap"><table><thead><tr><th>No</th><th>Nama</th><th>Asal/Jurusan</th><th>Status</th><th>Dokumen</th><th>Aksi</th></tr></thead><tbody id="adminRows"></tbody></table></div></div></div>
 </section>
-</div><footer>SPMB SMK Widya Dirgantara — Sistem Informasi Penerimaan Murid Baru</footer>
+</div>
+<section id="pembayaran" class="page">
+<div class="grid">
+<div class="card span4">
+<h2>💳 Input Pembayaran</h2>
+<div class="field"><label>No. Pendaftaran</label><input id="payNo" placeholder="SPMB-2026-00001"></div>
+<div class="field"><label>Nominal Pembayaran</label><input id="payNominal" type="number" min="0" placeholder="150000"></div>
+<div class="field"><label>Metode</label><select id="payMetode"><option>Tunai</option><option>Transfer Bank</option><option>QRIS</option><option>VA</option><option>Lainnya</option></select></div>
+<div class="field"><label>Keterangan</label><textarea id="payKet" placeholder="Contoh: Pembayaran formulir + administrasi"></textarea></div>
+<button class="primary" onclick="savePayment()">Simpan Pembayaran</button><div id="payMsg"></div>
+</div>
+<div class="card span8">
+<h2>🔎 Cari Pembayaran</h2>
+<div style="display:flex;gap:8px"><input id="paySearch" placeholder="Nomor pendaftaran"><button class="primary" onclick="searchPayment()">Cari</button></div>
+<div id="payResult" style="margin-top:16px"></div>
+</div>
+</div>
+</section>
+<footer>SPMB SMK Widya Dirgantara — Sistem Informasi Penerimaan Murid Baru</footer>
 </div>
 
 <div id="modal" class="modal hidden"><div class="modalbox"><div id="modalBody"></div><div class="no-print" style="text-align:right;margin-top:15px"><button class="light" onclick="closeModal()">Tutup</button> <button class="primary" onclick="window.print()">Cetak</button></div></div></div>
@@ -94,12 +124,12 @@ function setText(){
  $('jurusan').innerHTML='<option value="">Pilih</option>'+CONFIG.JURUSAN.map(x=>'<option>'+esc(x)+'</option>').join('');
  renderCosts();renderReqs();
 }
-function guest(){A.isAdmin=false;$('login').classList.add('hidden');$('site').classList.remove('hidden');$('adminBtn').classList.add('hidden');page('beranda')}
+function guest(){A.isAdmin=false;$('login').classList.add('hidden');$('site').classList.remove('hidden');$('adminBtn').classList.add('hidden');$('paymentBtn').classList.add('hidden');page('beranda')}
 async function adminLogin(){
- try{const r=await api('login_admin',{token:$('token').value});if(!r.ok)throw new Error(r.message);A.token=$('token').value;A.isAdmin=true;$('login').classList.add('hidden');$('site').classList.remove('hidden');$('adminBtn').classList.remove('hidden');page('admin');loadDashboard();loadApplicants()}
+ try{const r=await api('login_admin',{token:$('token').value});if(!r.ok)throw new Error(r.message);A.token=$('token').value;A.isAdmin=true;$('login').classList.add('hidden');$('site').classList.remove('hidden');$('adminBtn').classList.remove('hidden');$('paymentBtn').classList.remove('hidden');page('admin');loadDashboard();loadApplicants()}
  catch(e){$('loginMsg').textContent=e.message}
 }
-function logout(){A.token='';A.isAdmin=false;$('site').classList.add('hidden');$('login').classList.remove('hidden');$('token').value='';}
+function logout(){A.token='';A.isAdmin=false;$('site').classList.add('hidden');$('login').classList.remove('hidden');$('token').value='';$('adminBtn').classList.add('hidden');$('paymentBtn').classList.add('hidden');}
 function page(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.menu button').forEach(x=>x.classList.remove('active'));if(id==='admin'&&A.isAdmin)$('adminBtn').classList.add('active');else{const b=[...document.querySelectorAll('.menu button')].find(x=>x.getAttribute('onclick')===`page('${id}')`);if(b)b.classList.add('active')}scrollTo(0,0)}
 function renderCosts(){
  const c=A.cfg.biaya||[];let total=c.reduce((a,x)=>a+Number(x.nominal||0),0);
@@ -144,6 +174,54 @@ async function downloadReport(){const r=await api('report',{token:A.token});if(!
 function showReceipt(d){const s=A.cfg.sekolah,c=A.cfg.biaya||[];$('modalBody').innerHTML=`<div class="receipt"><div class="head"><img src="logo_widya.png" style="width:80px"><h2>${esc(s.NAMA_SEKOLAH)}</h2><div>${esc(s.ALAMAT_SEKOLAH)}<br>${esc(s.TELEPON)}</div><h3>KWITANSI / BUKTI PENDAFTARAN SPMB</h3></div><table>${[['No. Pendaftaran',d.nomor_pendaftaran],['Nama',d.nama],['NIK',d.nik],['NISN',d.nisn],['Asal Sekolah',d.asal_sekolah],['Jurusan',d.jurusan],['Jalur',d.jalur]].map(x=>`<tr><td>${x[0]}</td><td><b>${esc(x[1])}</b></td></tr>`).join('')}</table><hr>${c.map(x=>`<div style="display:flex;justify-content:space-between;padding:4px"><span>${esc(x.nama)}</span><span>${rp(x.nominal)}</span></div>`).join('')}<div style="display:flex;justify-content:space-between;font-size:18px;font-weight:bold;border-top:1px solid #111;padding-top:8px"><span>TOTAL</span><span>${rp(d.total_biaya)}</span></div><div style="margin-top:18px">Status: <b>${esc(d.status||'MENUNGGU VERIFIKASI')}</b></div><div class="sign">Panitia SPMB<br><br><br>____________________</div></div>`;$('modal').classList.remove('hidden')}
 function showCard(d){$('modalBody').innerHTML=`<div class="cardprint"><div class="cphead"><img src="logo_widya.png" style="width:75px"><h2>${esc(A.cfg.sekolah.NAMA_SEKOLAH)}</h2><b>KARTU PESERTA SPMB ${esc(A.cfg.sekolah.TAHUN_PELAJARAN)}</b></div><div class="cpflex"><img src="logo_widya.png"><div><b>Nomor:</b> ${esc(d.nomor_pendaftaran)}<br><b>Nama:</b> ${esc(d.nama)}<br><b>Asal:</b> ${esc(d.asal_sekolah)}<br><b>Jurusan:</b> ${esc(d.jurusan)}<br><b>Jalur:</b> ${esc(d.jalur)}</div></div></div>`;$('modal').classList.remove('hidden')}
 function closeModal(){$('modal').classList.add('hidden')}
+
+function terbilang(n){
+ n=Math.floor(Number(n)||0); if(n===0)return 'Nol';
+ const a=['','Satu','Dua','Tiga','Empat','Lima','Enam','Tujuh','Delapan','Sembilan','Sepuluh','Sebelas'];
+ function f(x){
+  if(x<12)return a[x];if(x<20)return a[x-10]+' Belas';if(x<100)return a[Math.floor(x/10)]+' Puluh'+(x%10?' '+f(x%10):'');
+  if(x<200)return 'Seratus'+(x%100?' '+f(x%100):'');if(x<1000)return a[Math.floor(x/100)]+' Ratus'+(x%100?' '+f(x%100):'');
+  if(x<2000)return 'Seribu'+(x%1000?' '+f(x%1000):'');if(x<1000000)return f(Math.floor(x/1000))+' Ribu'+(x%1000?' '+f(x%1000):'');
+  if(x<1000000000)return f(Math.floor(x/1000000))+' Juta'+(x%1000000?' '+f(x%1000000):'');
+  if(x<1000000000000)return f(Math.floor(x/1000000000))+' Miliar'+(x%1000000000?' '+f(x%1000000000):'');
+  return f(Math.floor(x/1000000000000))+' Triliun'+(x%1000000000000?' '+f(x%1000000000000):'');
+ }
+ return f(n)+' Rupiah';
+}
+function showPaymentReceipt(d,p){
+ const s=A.cfg.sekolah||{}, amount=Number(p.nominal||0);
+ $('modalBody').innerHTML=`<div class="receipt"><div class="head"><img src="logo_widya.png" style="width:82px"><h2>${esc(s.NAMA_SEKOLAH||'')}</h2><div>${esc(s.ALAMAT_SEKOLAH||'')}<br>${esc(s.TELEPON||'')}</div><h3>KWITANSI PEMBAYARAN SPMB</h3></div>
+ <table><tr><td>No. Kwitansi</td><td><b>${esc(p.no_kwitansi||'-')}</b></td></tr><tr><td>No. Pendaftaran</td><td><b>${esc(d.nomor_pendaftaran)}</b></td></tr><tr><td>Nama</td><td>${esc(d.nama)}</td></tr><tr><td>NIK</td><td>${esc(d.nik)}</td></tr><tr><td>Asal Sekolah</td><td>${esc(d.asal_sekolah)}</td></tr><tr><td>Jurusan</td><td>${esc(d.jurusan)}</td></tr></table><hr>
+ <table><tr><td>Keperluan</td><td>${esc(p.keterangan||'Pembayaran SPMB')}</td></tr><tr><td>Metode</td><td>${esc(p.metode||'-')}</td></tr><tr><td>Tanggal</td><td>${esc(p.timestamp||new Date().toLocaleString('id-ID'))}</td></tr><tr><td>Status</td><td><b>${esc(p.status||'LUNAS')}</b></td></tr></table>
+ <div style="margin-top:12px;border-top:1px solid #111;padding-top:10px;font-size:18px;font-weight:bold;display:flex;justify-content:space-between"><span>TOTAL</span><span>${rp(amount)}</span></div>
+ <div style="margin-top:8px;font-style:italic">Terbilang: <b>${esc(terbilang(amount))}</b></div><div class="sign">Petugas/Panitia SPMB<br><br><br>________________________</div></div>`;
+ $('modal').classList.remove('hidden');
+}
+async function findReceipt(){
+ const key=$('kwSearch').value.trim();if(!key)return;
+ $('kwResult').innerHTML='<div class="notice">Mencari data...</div>';
+ try{const r=await api('search',{key});if(!r.ok)throw new Error(r.message);const d=r.data,ps=r.payments||[],total=ps.reduce((a,p)=>a+Number(p.nominal||0),0);
+ $('kwResult').innerHTML=`<div class="card"><h3>${esc(d.nama)}</h3><p>No. Pendaftaran: <b>${esc(d.nomor_pendaftaran)}</b><br>Status SPMB: <b>${esc(d.status)}</b></p><div class="notice ok">Total pembayaran tercatat: <b>${rp(total)}</b></div>
+ ${ps.length?ps.map(p=>`<div class="cost"><div><b>${esc(p.no_kwitansi)}</b><br><small>${esc(p.metode)} — ${esc(p.status)}</small></div><div style="text-align:right"><b>${rp(p.nominal)}</b><br><button class="light" onclick='showPaymentReceipt(${JSON.stringify(d)},${JSON.stringify(p)})'>Cetak</button></div></div>`).join(''):'<p class="muted">Belum ada pembayaran yang dicatat oleh panitia.</p>'}</div>`;
+ }catch(e){$('kwResult').innerHTML='<div class="notice error">'+esc(e.message)+'</div>'}
+}
+async function savePayment(){
+ const no=$('payNo').value.trim(),nominal=$('payNominal').value;if(!no||!nominal)return alert('Nomor pendaftaran dan nominal wajib diisi.');
+ $('payMsg').innerHTML='<div class="notice">Menyimpan pembayaran...</div>';
+ try{const r=await api('payment',{token:A.token,nomor:no,nominal:nominal,metode:$('payMetode').value,keterangan:$('payKet').value});if(!r.ok)throw new Error(r.message);
+ $('payMsg').innerHTML=`<div class="notice ok">Pembayaran tersimpan. Nomor kwitansi: <b>${esc(r.no_kwitansi)}</b></div>`;
+ const q=await api('search',{key:no});if(q.ok&&q.payments&&q.payments.length)showPaymentReceipt(q.data,q.payments[q.payments.length-1]);
+ $('payNominal').value='';$('payKet').value='';
+ }catch(e){$('payMsg').innerHTML='<div class="notice error">'+esc(e.message)+'</div>'}
+}
+async function searchPayment(){
+ const key=$('paySearch').value.trim();if(!key)return;
+ try{const r=await api('search',{key});if(!r.ok)throw new Error(r.message);const ps=r.payments||[];
+ $('payResult').innerHTML=`<div class="notice ok"><b>${esc(r.data.nama)}</b> — ${esc(r.data.nomor_pendaftaran)}<br>Total pembayaran: <b>${rp(ps.reduce((a,p)=>a+Number(p.nominal||0),0))}</b></div>`+
+ (ps.map(p=>`<div class="cost"><span>${esc(p.no_kwitansi)} — ${esc(p.metode)}</span><span><b>${rp(p.nominal)}</b> <button class="light" onclick='showPaymentReceipt(${JSON.stringify(r.data)},${JSON.stringify(p)})'>Cetak</button></span></div>`).join('')||'<p>Belum ada pembayaran.</p>');
+ }catch(e){$('payResult').innerHTML='<div class="notice error">'+esc(e.message)+'</div>'}
+}
+
 boot();
 </script>
 </body>
