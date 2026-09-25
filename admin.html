@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Display SPMB</title>
+<style>
+:root{--p:#183b73;--a:#e3b341;--bg:#f3f6fb;--line:#dce3ee;--text:#162033;--muted:#657083}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Segoe UI,Arial;background:var(--bg);color:var(--text)}button,input,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;font-weight:750}.primary{background:var(--p);color:#fff}.gold{background:var(--a);color:#172033}.light{background:#eaf0f8;color:var(--p)}.danger{background:#fee2e2;color:#b91c1c}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 20% 10%,#355a95,#0b1f42 70%)}.box{width:min(430px,100%);background:#fff;border-radius:24px;padding:32px;box-shadow:0 25px 70px #0005;text-align:center}.logo{width:110px;height:110px;object-fit:contain;border-radius:50%;background:#fff}.field{text-align:left;margin:12px 0}.field label{display:block;font-size:13px;font-weight:750;margin-bottom:6px}.field input,.field textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px}.full{width:100%}.msg{margin-top:10px;color:#b91c1c}
+#app{display:none}.top{background:#0f2d5b;color:#fff;padding:13px 22px;display:flex;align-items:center;gap:12px}.top img{width:48px;height:48px;border-radius:50%;background:#fff;padding:2px}.brand{flex:1;font-weight:850}.brand small{display:block;opacity:.7;font-weight:500}.wrap{width:min(1250px,100%);margin:auto;padding:20px}.hero,.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 5px 20px #173b7408;margin-bottom:16px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.wide{grid-column:1/-1}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.list{max-height:330px;overflow:auto}.item{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.muted{color:var(--muted)}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.ok{color:#15803d}.error{color:#b91c1c}
+@media(max-width:800px){.grid,.formgrid{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<div id="login" class="login"><div class="box">
+<img src="logo_widya.png" class="logo" onerror="this.style.visibility='hidden'">
+<h1>ADMIN DISPLAY</h1><p class="muted">Pengelolaan Display Informasi SPMB</p>
+<div class="field"><label>Token Admin Display</label><input id="token" type="password" placeholder="Masukkan token"></div>
+<button class="primary full" onclick="login()">Masuk</button><div id="loginMsg" class="msg"></div>
+</div></div>
+<div id="app">
+<header class="top"><img src="logo_widya.png" onerror="this.style.visibility='hidden'"><div class="brand">ADMIN DISPLAY SPMB<small>SMK Widya Dirgantara</small></div><div class="row"><button class="gold" onclick="window.open('tv.html','_blank')">📺 Buka TV</button><button class="light" onclick="logout()">Keluar</button></div></header>
+<main class="wrap">
+<div class="hero"><h1>Pengaturan Display Informasi</h1><p class="muted">Aplikasi ini terpisah dari dashboard SPMB. Data pendaftar hanya dibaca; perubahan hanya dilakukan pada sheet DISPLAY_*.</p></div>
+<div class="grid">
+<section class="card">
+<h2>⚙️ Konfigurasi</h2>
+<div class="formgrid">
+<div class="field"><label>Judul</label><input id="title"></div><div class="field"><label>Subjudul</label><input id="subtitle"></div>
+<div class="field"><label>Refresh data (detik)</label><input id="refreshSeconds" type="number" min="10"></div><div class="field"><label>Durasi video default (detik)</label><input id="slideSeconds" type="number" min="5"></div>
+<div class="field"><label>Warna utama</label><input id="primaryColor" type="color"></div><div class="field"><label>Warna aksen</label><input id="accentColor" type="color"></div>
+<div class="field wide"><label>Running text / ticker</label><input id="ticker"></div>
+<div class="field"><label>Nama sekolah</label><input id="schoolName"></div><div class="field"><label>Tahun pelajaran</label><input id="schoolYear"></div>
+</div>
+<p><label><input id="showStats" type="checkbox"> Tampilkan statistik</label> &nbsp; <label><input id="showJurusan" type="checkbox"> Tampilkan jurusan</label> &nbsp; <label><input id="showAnnouncements" type="checkbox"> Tampilkan pengumuman</label></p>
+<button class="primary" onclick="saveConfig()">Simpan Konfigurasi</button> <span id="cfgMsg"></span>
+</section>
+<section class="card">
+<h2>🎓 Jurusan & Kuota</h2>
+<input id="jId" type="hidden"><div class="formgrid">
+<div class="field"><label>Nama jurusan</label><input id="jNama"></div><div class="field"><label>Kuota</label><input id="jKuota" type="number" min="0"></div>
+<div class="field wide"><label>Info</label><textarea id="jInfo"></textarea></div><div class="field"><label>Urutan</label><input id="jUrutan" type="number" value="1"></div>
+</div><label><input id="jAktif" type="checkbox" checked> Aktif</label><br><button class="primary" onclick="saveJurusan()">Simpan</button> <button class="light" onclick="resetJurusan()">Baru</button>
+<div id="jList" class="list"></div>
+</section>
+<section class="card">
+<h2>📢 Pengumuman</h2>
+<input id="aId" type="hidden"><div class="field"><label>Judul</label><input id="aJudul"></div><div class="field"><label>Isi</label><textarea id="aIsi"></textarea></div>
+<div class="formgrid"><div class="field"><label>Tanggal</label><input id="aTanggal" type="date"></div><div class="field"><label>Urutan</label><input id="aUrutan" type="number" value="1"></div></div>
+<label><input id="aAktif" type="checkbox" checked> Aktif</label><br><button class="primary" onclick="saveAnnouncement()">Simpan</button> <button class="light" onclick="resetAnnouncement()">Baru</button>
+<div id="aList" class="list"></div>
+</section>
+<section class="card">
+<h2>🎬 Video</h2><p class="muted">Gunakan URL MP4 langsung atau URL YouTube.</p>
+<input id="vId" type="hidden"><div class="field"><label>Judul</label><input id="vJudul"></div><div class="field"><label>URL</label><input id="vUrl"></div>
+<div class="formgrid"><div class="field"><label>Durasi (detik)</label><input id="vDurasi" type="number" value="30"></div><div class="field"><label>Urutan</label><input id="vUrutan" type="number" value="1"></div></div>
+<label><input id="vAktif" type="checkbox" checked> Aktif</label><br><button class="primary" onclick="saveVideo()">Simpan</button> <button class="light" onclick="resetVideo()">Baru</button>
+<div id="vList" class="list"></div>
+</section>
+</div>
+</main></div>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbxZ45dT0nyyJQoMQpTctLyfiuUL-2xEvIb4vIuOAzHn8wsc1pfY_qSU0ZBD2fJ2YDe8/exec';let TOKEN='';const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function api(action,params={}){return new Promise((resolve,reject)=>{const cb='cb_'+Date.now()+Math.random().toString(36).slice(2),s=document.createElement('script');window[cb]=x=>{delete window[cb];s.remove();resolve(x)};s.onerror=()=>{delete window[cb];s.remove();reject(new Error('Server tidak dapat dihubungi.'))};s.src=API_URL+'?'+new URLSearchParams({action,callback:cb,...params});document.body.appendChild(s);setTimeout(()=>{if(window[cb]){delete window[cb];s.remove();reject(new Error('Timeout server.'))}},15000)})}
+async function login(){try{const t=$('token').value.trim(),r=await api('login',{token:t});if(!r.ok)throw new Error(r.message);TOKEN=t;$('login').style.display='none';$('app').style.display='block';loadAll()}catch(e){$('loginMsg').textContent=e.message}}
+function logout(){TOKEN='';location.reload()}
+async function loadAll(){const r=await api('displayData');if(!r.ok)return;fillConfig(r.config);loadJurusan();loadAnnouncements();loadVideos()}
+function fillConfig(c){['title','subtitle','refreshSeconds','slideSeconds','primaryColor','accentColor','ticker','schoolName','schoolYear'].forEach(k=>$(k).value=c[k]??'');$('showStats').checked=c.showStats!==false;$('showJurusan').checked=c.showJurusan!==false;$('showAnnouncements').checked=c.showAnnouncements!==false}
+async function saveConfig(){const p={token:TOKEN,title:$('title').value,subtitle:$('subtitle').value,refreshSeconds:$('refreshSeconds').value,slideSeconds:$('slideSeconds').value,primaryColor:$('primaryColor').value,accentColor:$('accentColor').value,ticker:$('ticker').value,schoolName:$('schoolName').value,schoolYear:$('schoolYear').value,showStats:$('showStats').checked,showJurusan:$('showJurusan').checked,showAnnouncements:$('showAnnouncements').checked};const r=await api('saveConfig',p);$('cfgMsg').textContent=r.message||''}
+function resetJurusan(){$('jId').value='';$('jNama').value='';$('jKuota').value='';$('jInfo').value='';$('jUrutan').value=1;$('jAktif').checked=true}
+async function loadJurusan(){const r=await api('listJurusan',{token:TOKEN});$('jList').innerHTML=(r.data||[]).map(x=>`<div class="item"><div><b>${esc(x.nama)}</b><br>Kuota: ${esc(x.kuota)}<br><small>${esc(x.info||'')}</small></div><div><button class="light" onclick='editJ(${JSON.stringify(x)})'>Edit</button> <button class="danger" onclick="delJ('${esc(x.id)}')">Hapus</button></div></div>`).join('')}
+function editJ(x){$('jId').value=x.id;$('jNama').value=x.nama;$('jKuota').value=x.kuota;$('jInfo').value=x.info||'';$('jUrutan').value=x.urutan||1;$('jAktif').checked=String(x.aktif)!=='false'}
+async function saveJurusan(){const r=await api('saveJurusan',{token:TOKEN,id:$('jId').value,nama:$('jNama').value,kuota:$('jKuota').value,info:$('jInfo').value,urutan:$('jUrutan').value,aktif:$('jAktif').checked});alert(r.message||'Selesai');resetJurusan();loadJurusan()}
+async function delJ(id){if(confirm('Hapus jurusan ini?')){await api('deleteJurusan',{token:TOKEN,id});loadJurusan()}}
+function resetAnnouncement(){$('aId').value='';$('aJudul').value='';$('aIsi').value='';$('aTanggal').value='';$('aUrutan').value=1;$('aAktif').checked=true}
+async function loadAnnouncements(){const r=await api('listAnnouncement',{token:TOKEN});$('aList').innerHTML=(r.data||[]).map(x=>`<div class="item"><div><b>${esc(x.judul)}</b><br><small>${esc(x.tanggal||'')}</small><p>${esc(x.isi||'')}</p></div><div><button class="light" onclick='editA(${JSON.stringify(x)})'>Edit</button> <button class="danger" onclick="delA('${esc(x.id)}')">Hapus</button></div></div>`).join('')}
+function editA(x){$('aId').value=x.id;$('aJudul').value=x.judul;$('aIsi').value=x.isi;$('aTanggal').value=x.tanggal||'';$('aUrutan').value=x.urutan||1;$('aAktif').checked=String(x.aktif)!=='false'}
+async function saveAnnouncement(){const r=await api('saveAnnouncement',{token:TOKEN,id:$('aId').value,judul:$('aJudul').value,isi:$('aIsi').value,tanggal:$('aTanggal').value,urutan:$('aUrutan').value,aktif:$('aAktif').checked});alert(r.message||'Selesai');resetAnnouncement();loadAnnouncements()}
+async function delA(id){if(confirm('Hapus pengumuman ini?')){await api('deleteAnnouncement',{token:TOKEN,id});loadAnnouncements()}}
+function resetVideo(){$('vId').value='';$('vJudul').value='';$('vUrl').value='';$('vDurasi').value=30;$('vUrutan').value=1;$('vAktif').checked=true}
+async function loadVideos(){const r=await api('listVideo',{token:TOKEN});$('vList').innerHTML=(r.data||[]).map(x=>`<div class="item"><div><b>${esc(x.judul)}</b><br><small>${esc(x.url)}</small><br>Durasi: ${esc(x.durasi)} detik</div><div><button class="light" onclick='editV(${JSON.stringify(x)})'>Edit</button> <button class="danger" onclick="delV('${esc(x.id)}')">Hapus</button></div></div>`).join('')}
+function editV(x){$('vId').value=x.id;$('vJudul').value=x.judul;$('vUrl').value=x.url;$('vDurasi').value=x.durasi||30;$('vUrutan').value=x.urutan||1;$('vAktif').checked=String(x.aktif)!=='false'}
+async function saveVideo(){const r=await api('saveVideo',{token:TOKEN,id:$('vId').value,judul:$('vJudul').value,url:$('vUrl').value,durasi:$('vDurasi').value,urutan:$('vUrutan').value,aktif:$('vAktif').checked});alert(r.message||'Selesai');resetVideo();loadVideos()}
+async function delV(id){if(confirm('Hapus video ini?')){await api('deleteVideo',{token:TOKEN,id});loadVideos()}}
+</script>
+</body></html>

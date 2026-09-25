@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Display Informasi SPMB</title>
+<style>
+:root{--p:#183b73;--a:#e3b341}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,system-ui,Segoe UI,Arial;background:#07142d;color:#fff}
+#app{width:100%;height:100%;display:flex;flex-direction:column}
+.top{height:13vh;display:flex;align-items:center;gap:20px;padding:12px 30px;background:linear-gradient(90deg,var(--p),#091b3c);border-bottom:2px solid var(--a)}
+.logo{width:70px;height:70px;border-radius:50%;object-fit:contain;background:#fff;padding:4px}.titles{min-width:0}.title{font-size:clamp(22px,2.7vw,46px);font-weight:900;line-height:1.05}.sub{opacity:.78;font-size:clamp(12px,1.2vw,20px);margin-top:5px}.clock{margin-left:auto;text-align:right}.clock b{display:block;font-size:clamp(23px,2.7vw,40px)}.clock span{opacity:.7}
+.body{height:76vh;padding:18px 30px;position:relative}.page{display:none;height:100%}.page.active{display:block}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;height:27%}.stat{background:#10244a;border:1px solid #ffffff18;border-radius:18px;padding:16px;display:flex;flex-direction:column;justify-content:center}.stat small{opacity:.7;font-size:clamp(12px,1.1vw,18px)}.stat b{font-size:clamp(30px,4vw,65px);margin-top:4px}
+.grid{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;height:69%;margin-top:16px}.panel{background:#10244a;border:1px solid #ffffff18;border-radius:18px;padding:18px;overflow:hidden}.panel h2{margin:0 0 12px;font-size:clamp(18px,1.6vw,28px)}.table{width:100%;border-collapse:collapse;font-size:clamp(12px,1.05vw,18px)}.table th{background:var(--p);text-align:left}.table td,.table th{padding:9px;border-bottom:1px solid #ffffff14}.bar{height:7px;background:#ffffff18;border-radius:10px;margin-top:4px}.bar i{height:100%;display:block;background:var(--a);border-radius:10px}
+.news{height:100%;overflow:hidden}.newsItem{padding:12px 0;border-bottom:1px solid #ffffff18}.newsItem h3{margin:0 0 4px;font-size:clamp(14px,1.2vw,21px)}.newsItem p{margin:0;opacity:.76;line-height:1.4;font-size:clamp(11px,1vw,17px)}
+.media{height:100%;display:grid;place-items:center;background:#000;border-radius:18px;overflow:hidden}.media video,.media iframe{width:100%;height:100%;border:0;object-fit:contain}.empty{opacity:.6;text-align:center}
+.bottom{height:11vh;display:flex;align-items:center;gap:18px;padding:0 30px;background:#091b3c;border-top:1px solid #ffffff18}.ticker{flex:1;overflow:hidden;white-space:nowrap;font-size:clamp(14px,1.3vw,23px);font-weight:750}.ticker span{display:inline-block;animation:move 24s linear infinite}@keyframes move{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+.reload{opacity:.45;font-size:12px}.admin{background:#ffffff12;color:#fff;border:0;border-radius:8px;padding:8px 10px}
+@media(max-width:900px){.clock{display:none}.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr);height:auto}.body{overflow:auto;height:76vh}.page{min-height:70vh;height:auto}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <img class="logo" src="logo_widya.png" onerror="this.style.visibility='hidden'">
+    <div class="titles"><div id="title" class="title">INFORMASI SPMB</div><div id="sub" class="sub">Papan Informasi Penerimaan Murid Baru</div></div>
+    <div class="clock"><b id="time">00:00:00</b><span id="date"></span></div>
+  </header>
+  <main class="body">
+    <section id="overview" class="page active">
+      <div id="stats" class="stats"></div>
+      <div class="grid">
+        <div class="panel"><h2>Kuota & Pendaftaran per Jurusan</h2><div id="jurusan"></div></div>
+        <div class="panel"><h2>📢 Pengumuman</h2><div id="news" class="news"></div></div>
+      </div>
+    </section>
+    <section id="videoPage" class="page"><div id="media" class="media"></div></section>
+  </main>
+  <footer class="bottom">
+    <div class="ticker"><span id="ticker">Informasi SPMB</span></div>
+    <div id="reload" class="reload">Memuat...</div>
+    <button class="admin" onclick="location.href='admin.html'">⚙</button>
+  </footer>
+</div>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbxZ45dT0nyyJQoMQpTctLyfiuUL-2xEvIb4vIuOAzHn8wsc1pfY_qSU0ZBD2fJ2YDe8/exec';
+let state={data:null,videoIndex:0,videoTimer:null};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function api(action,params={}){return new Promise((resolve,reject)=>{const cb='cb_'+Date.now()+Math.random().toString(36).slice(2);const s=document.createElement('script');window[cb]=x=>{delete window[cb];s.remove();resolve(x)};s.onerror=()=>{delete window[cb];s.remove();reject(new Error('Server Display tidak dapat dihubungi.'))};s.src=API_URL+'?'+new URLSearchParams({action,callback:cb,...params});document.body.appendChild(s);setTimeout(()=>{if(window[cb]){delete window[cb];s.remove();reject(new Error('Timeout server.'))}},15000)})}
+function clock(){const d=new Date();$('time').textContent=d.toLocaleTimeString('id-ID');$('date').textContent=d.toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}setInterval(clock,1000);clock();
+function render(d){
+ state.data=d;const c=d.config||{};document.documentElement.style.setProperty('--p',c.primaryColor||'#183b73');document.documentElement.style.setProperty('--a',c.accentColor||'#e3b341');
+ $('title').textContent=c.title||'INFORMASI SPMB';$('sub').textContent=c.subtitle||'';$('ticker').textContent=c.ticker||'Informasi SPMB';
+ const s=d.stats||{};$('stats').style.display=c.showStats===false?'none':'grid';
+ $('stats').innerHTML=[['Total Pendaftar',s.total],['Menunggu Verifikasi',s.menunggu],['Terverifikasi',s.terverifikasi],['Diterima',s.diterima]].map(x=>`<div class="stat"><small>${x[0]}</small><b>${x[1]??0}</b></div>`).join('');
+ const js=d.jurusan||[];$('jurusan').parentElement.style.display=c.showJurusan===false?'none':'block';
+ $('jurusan').innerHTML=js.length?`<table class="table"><thead><tr><th>Jurusan</th><th>Pendaftar</th><th>Kuota</th><th>Persentase</th></tr></thead><tbody>${js.map(j=>{const q=Number(j.kuota||0),n=Number(j.pendaftar||0),pct=q?Math.min(100,n/q*100):0;return `<tr><td><b>${esc(j.nama)}</b><br><small style="opacity:.6">${esc(j.info||'')}</small><div class="bar"><i style="width:${pct}%"></i></div></td><td>${n}</td><td>${q||'-'}</td><td>${q?Math.round(pct)+'%':'-'}</td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Belum ada data jurusan.</div>';
+ $('news').parentElement.style.display=c.showAnnouncements===false?'none':'block';const ns=d.announcements||[];$('news').innerHTML=ns.length?ns.slice(0,6).map(n=>`<div class="newsItem"><h3>${esc(n.judul)}</h3><p>${esc(n.isi)}</p></div>`).join(''):'<div class="empty">Belum ada pengumuman.</div>';
+ state.videoIndex=0;playNextVideo();
+}
+function showPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
+function playNextVideo(){
+ clearTimeout(state.videoTimer);const vs=(state.data&&state.data.videos)||[];
+ if(!vs.length){showPage('overview');return}
+ const v=vs[state.videoIndex%vs.length];state.videoIndex++;
+ showPage('videoPage');const url=String(v.url||'');let html='';
+ if(/\.mp4($|\?)/i.test(url)){html=`<video autoplay muted playsinline src="${esc(url)}" onended="playNextVideo()"></video>`}
+ else if(/youtube\.com|youtu\.be/i.test(url)){const id=(url.match(/(?:v=|youtu\\.be\\/|embed\\/)([\\w-]{6,})/)||[])[1];html=id?`<iframe src="https://www.youtube.com/embed/${esc(id)}?autoplay=1&mute=1&controls=0&rel=0" allow="autoplay;fullscreen"></iframe>`:'<div class="empty">URL YouTube tidak valid.</div>'}
+ else html='<div class="empty">Format video belum didukung.</div>';
+ $('media').innerHTML=html;state.videoTimer=setTimeout(playNextVideo,Math.max(5,Number(v.durasi||30))*1000)
+}
+async function load(){try{const r=await api('displayData');if(!r.ok)throw new Error(r.message);render(r);$('reload').textContent='Data diperbarui '+new Date().toLocaleTimeString('id-ID')}catch(e){$('reload').textContent=e.message}}
+load();setInterval(load,30000);
+</script>
+</body></html>
